@@ -164,7 +164,7 @@ password = "panda1234"
 
 ## 🏗️ Architecture
 ```bash
-franka-automation/
+franka-seleium/
 ├── main.py                 # Main entry point and argument parsing
 ├── utils/
 │   ├── config.py          # Configuration management
@@ -178,5 +178,4 @@ franka-automation/
 │   └── signal_handler.py  # Graceful shutdown handling
 ├── requirements.txt       # Python dependencies
 └── README.md             # This file
-text
 ```
