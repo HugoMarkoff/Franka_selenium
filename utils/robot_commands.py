@@ -370,6 +370,112 @@ class FrankaRobotCommands:
             self.logger.error(f"❌ Error waiting for task completion: {e}")
             return False
 
+    def set_axis_offset(self, axis: str, value: float) -> bool:
+        """Set offset value for X, Y, or Z axis."""
+        self.logger.info(f"📐 Setting {axis.upper()} offset to {value}")
+        
+        try:
+            # Button paths for X, Y, Z
+            button_paths = {
+                "x": "/html/body/div[2]/section/section/section/one-timeline/div[3]/div/one-container/div/one-timeline-skill/div/one-context-menu/div/div[3]/div[1]/div/step/toggle-slider/step/div/div[1]/button[1]",
+                "y": "/html/body/div[2]/section/section/section/one-timeline/div[3]/div/one-container/div/one-timeline-skill/div/one-context-menu/div/div[3]/div[1]/div/step/toggle-slider/step/div/div[1]/button[2]",
+                "z": "/html/body/div[2]/section/section/section/one-timeline/div[3]/div/one-container/div/one-timeline-skill/div/one-context-menu/div/div[3]/div[1]/div/step/toggle-slider/step/div/div[1]/button[3]"
+            }
+            
+            # Shared text field path
+            text_field_path = "/html/body/div[2]/section/section/section/one-timeline/div[3]/div/one-container/div/one-timeline-skill/div/one-context-menu/div/div[3]/div[1]/div/step/toggle-slider/step/div/div[2]/linear-slider/step/div/div[4]/div[1]"
+            
+            # 1. Click the axis button (X, Y, or Z)
+            axis_button = self.wait_for_element((By.XPATH, button_paths[axis.lower()]), timeout=10)
+            if not axis_button:
+                self.logger.error(f"❌ {axis.upper()} button not found")
+                return False
+            
+            axis_button.click()
+            self.logger.info(f"✅ Clicked {axis.upper()} button")
+            
+            # 2. Set value in the shared text field
+            text_field = self.wait_for_element((By.XPATH, text_field_path), timeout=10)
+            if not text_field:
+                self.logger.error(f"❌ Text field not found for {axis.upper()}")
+                return False
+            
+            # Click to make editable and set value
+            text_field.click()
+            
+            from selenium.webdriver.common.action_chains import ActionChains
+            actions = ActionChains(self.driver)
+            
+            actions.key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL)  # Ctrl+A
+            actions.send_keys(str(value))  # Type value (supports negative numbers)
+            actions.send_keys(Keys.ENTER)  # Press Enter
+            actions.perform()
+            
+            self.logger.info(f"✅ {axis.upper()} offset set to {value}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ Failed to set {axis.upper()} offset: {e}")
+            return False
+
+    def set_robot_speed(self, speed: int) -> bool:
+        """Set robot movement speed."""
+        self.logger.info(f"⚡ Setting robot speed to {speed}%")
+        
+        try:
+            speed_field_path = "/html/body/div[2]/section/section/section/one-timeline/div[3]/div/one-container/div/one-timeline-skill/div/one-context-menu/div/div[3]/div[7]/div/step/linear-slider/step/div/div[4]/div[1]"
+            
+            speed_field = self.wait_for_element((By.XPATH, speed_field_path), timeout=10)
+            if not speed_field:
+                self.logger.error("❌ Robot speed field not found")
+                return False
+            
+            speed_field.click()
+            
+            from selenium.webdriver.common.action_chains import ActionChains
+            actions = ActionChains(self.driver)
+            
+            actions.key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL)
+            actions.send_keys(str(speed))
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
+            
+            self.logger.info(f"✅ Robot speed set to {speed}%")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ Failed to set robot speed: {e}")
+            return False
+
+    def set_robot_acceleration(self, acceleration: int) -> bool:
+        """Set robot acceleration."""
+        self.logger.info(f"🚀 Setting robot acceleration to {acceleration}%")
+        
+        try:
+            accel_field_path = "/html/body/div[2]/section/section/section/one-timeline/div[3]/div/one-container/div/one-timeline-skill/div/one-context-menu/div/div[3]/div[10]/div/step/linear-slider/step/div/div[4]/div[1]"
+            
+            accel_field = self.wait_for_element((By.XPATH, accel_field_path), timeout=10)
+            if not accel_field:
+                self.logger.error("❌ Robot acceleration field not found")
+                return False
+            
+            accel_field.click()
+            
+            from selenium.webdriver.common.action_chains import ActionChains
+            actions = ActionChains(self.driver)
+            
+            actions.key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL)
+            actions.send_keys(str(acceleration))
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
+            
+            self.logger.info(f"✅ Robot acceleration set to {acceleration}%")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ Failed to set robot acceleration: {e}")
+            return False
+
 
     # ========== HIGH-LEVEL GRIPPER COMMANDS ==========
 
@@ -527,3 +633,90 @@ class FrankaRobotCommands:
         
         self.logger.info("✅ Gripper closed successfully")
         return True
+
+    def move_robot(self, x: float = 0, y: float = 0, z: float = 0, speed: int = 5, acceleration: int = 5) -> bool:
+        """Move robot with relative motion and execute immediately."""
+        self.logger.info(f"🤖 Moving robot: X={x}, Y={y}, Z={z}, Speed={speed}%, Accel={acceleration}%")
+        
+        # Validate parameters
+        if not (5 <= speed <= 100):
+            self.logger.error(f"❌ Speed {speed} out of range (5-100%)")
+            return False
+        if not (5 <= acceleration <= 100):
+            self.logger.error(f"❌ Acceleration {acceleration} out of range (5-100%)")
+            return False
+        
+        try:
+            # 0. Wait for any current task to complete
+            if not self.wait_for_task_completion(timeout=10):
+                self.logger.warning("⚠️ Previous task still running, waiting...")
+            
+            # 1. Select Move_robot task
+            if not self.select_task_from_list("Move_robot"):
+                return False
+            
+            # 2. Click task icon to configure
+            if not self.click_task_icon_for_config():
+                return False
+            
+            # 3. Set ALL X, Y, Z offsets explicitly (including 0 values to clear previous configs)
+            if not self.set_axis_offset("x", x):
+                return False
+            
+            if not self.set_axis_offset("y", y):
+                return False
+            
+            if not self.set_axis_offset("z", z):
+                return False
+            
+            # 4. Continue from OFFSET to FRAME tab
+            self.logger.info("📐 Continuing from OFFSET to FRAME...")
+            if not self.click_continue_button():
+                self.logger.error("❌ Failed to continue from OFFSET to FRAME")
+                return False
+            
+            # 5. Continue from FRAME to SPEED tab (skip frame selection)
+            self.logger.info("🖼️ Continuing from FRAME to SPEED...")
+            if not self.click_continue_button():
+                self.logger.error("❌ Failed to continue from FRAME to SPEED")
+                return False
+            
+            # 6. Set speed in SPEED tab
+            self.logger.info(f"⚡ Setting robot speed to {speed}%...")
+            if not self.set_robot_speed(speed):
+                self.logger.error("❌ Failed to set robot speed")
+                return False
+            
+            # 7. Continue from SPEED to ACCELERATION tab
+            if not self.click_continue_button():
+                self.logger.error("❌ Failed to continue from SPEED to ACCELERATION")
+                return False
+            
+            # 8. Set acceleration in ACCELERATION tab
+            self.logger.info(f"🚀 Setting robot acceleration to {acceleration}%...")
+            if not self.set_robot_acceleration(acceleration):
+                self.logger.error("❌ Failed to set robot acceleration")
+                return False
+            
+            # 9. Continue to close dialog
+            if not self.click_continue_button():
+                self.logger.error("❌ Failed to close configuration dialog")
+                return False
+            
+            # 10. Execute the task immediately
+            self.logger.info("▶️ Executing robot movement...")
+            if not self.click_execution_button():
+                return False
+            
+            if not self.click_confirm_button():
+                return False
+            
+            if not self.wait_for_task_completion():
+                return False
+            
+            self.logger.info(f"✅ Robot moved successfully: X={x}, Y={y}, Z={z}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ Failed to move robot: {e}")
+            return False

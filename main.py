@@ -48,6 +48,9 @@ def run_interactive_shell(automation: 'FrankaAutomation'):
     def close_gripper():
         return automation.gripper_close()
     
+    def move_robot(x=0, y=0, z=0, speed=5, acceleration=5):
+        return automation.commands.move_robot(x, y, z, speed, acceleration)
+    
     def robot_status():
         return automation.robot.check_robot_status()
     
@@ -58,6 +61,7 @@ def run_interactive_shell(automation: 'FrankaAutomation'):
         'config_close': config_close, 
         'open_gripper': open_gripper,
         'close_gripper': close_gripper,
+        'move_robot': move_robot,
         'robot_status': robot_status,
         'automation': automation,
     }
@@ -70,18 +74,25 @@ def run_interactive_shell(automation: 'FrankaAutomation'):
     print("  config_close(speed=50, force=80, load=400) - Configure gripper close") 
     print("  open_gripper()                           - Execute gripper open")
     print("  close_gripper()                          - Execute gripper close")
+    print("  move_robot(x=0, y=0, z=0, speed=5, accel=5) - Move robot relative")
     print("  robot_status()                           - Check robot status")
     print("  robot                                    - Access full robot instance")
     print("\nParameter ranges:")
-    print("  speed: 10-100    (speed %)")
-    print("  force: 20-100    (grasping force in Newtons)")
-    print("  load:  10-1000   (load capacity in grams)")
+    print("  Gripper speed: 10-100    (speed %)")
+    print("  Gripper force: 20-100    (grasping force in Newtons)")
+    print("  Gripper load:  10-1000   (load capacity in grams)")
+    print("  Robot speed:   5-100     (movement speed %)")
+    print("  Robot accel:   5-100     (acceleration %)")
+    print("  Robot x,y,z:   any float (relative movement in mm)")
     print("\nExamples:")
     print("  config_open(30)                 # Set open speed to 30%")
     print("  config_close(60, 85, 500)      # Set close: 60% speed, 85N force, 500g load")
     print("  config_close()                  # Use defaults (50% speed, 80N force, 400g load)")
     print("  open_gripper()                  # Open gripper")
     print("  close_gripper()                 # Close gripper")
+    print("  move_robot(10, 0, 5)            # Move +10mm X, +5mm Z")
+    print("  move_robot(-5, 10, 0, 10, 15)   # Move -5mm X, +10mm Y, 10% speed, 15% accel")
+    print("  move_robot(z=-20)               # Move -20mm Z only")
     print("  exit()                          # Exit shell")
     print("="*60)
     
