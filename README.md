@@ -163,7 +163,7 @@ password = "panda1234"
 ```
 
 ## 🏗️ Architecture
-
+```bash
 franka-automation/
 ├── main.py                 # Main entry point and argument parsing
 ├── utils/
@@ -179,3 +179,4 @@ franka-automation/
 ├── requirements.txt       # Python dependencies
 └── README.md             # This file
 text
+```
