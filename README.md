@@ -26,7 +26,7 @@ A robust, modular automation framework for controlling Franka Panda robots throu
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/HugoMarkoff/Franka_selenium.git
    cd Franka_selenium
    ```
 
